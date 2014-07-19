@@ -28,11 +28,6 @@ import javax.swing.JButton;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
 
-import javax.swing.border.LineBorder;
-
-import com.sun.corba.se.spi.orbutil.fsm.Guard.Result;
-
-import java.awt.Color;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -201,17 +196,35 @@ public class LibraryManagement {
 					
 					query += " GROUP BY BOOK_COPIES.Branch_id;";
 					// while(!firstName.matches("^[^\\d\\s]+$"));
-					ResultSet result = null;
+					ResultSet rs = null;
 					
 					try {
 						System.out.println(query);
-						result = stmt.executeQuery(query);
+						rs = stmt.executeQuery(query);
+						if(null == rs) {
+							return;
+						}
+						/*ResultSetMetaData md = rs.getMetaData();
+						int columns = md.getColumnCount();
+						ArrayList<String> columnNames = new ArrayList<>();
+						for (int i = 1; i <= columns; i++) {
+			                columnNames.add( md.getColumnName(i) );
+			            }
+						while (rs.next()) {
+			                ArrayList<String> row = new ArrayList(columns);
+			                for (int i = 1; i <= columns; i++) {
+			                    row.add(rs.getObject(i) );
+			                }
+			            }*/
+						
+						ResultsModel model = new ResultsModel();
+						model.setResultSet(rs);
+						tableSearch.setModel(model);
+					
+					
 					} catch (SQLException e1) {
 						// TODO Auto-generated catch block
 						e1.printStackTrace();
-					}
-					if(null == result) {
-						return;
 					}
 					
 					
@@ -229,8 +242,8 @@ public class LibraryManagement {
 		scrollPaneSearch.setBounds(12, 162, 660, 227);
 		panelSearch.add(scrollPaneSearch);
 		
-		table = new JTable();
-		scrollPaneSearch.setViewportView(table);
+		tableSearch = new JTable();
+		scrollPaneSearch.setViewportView(tableSearch);
 		
 		
 		JPanel panel_1 = new JPanel();
@@ -244,7 +257,7 @@ public class LibraryManagement {
 	}
 	
 	private boolean fullNameEnabled = true;
-	private JTable table;
+	private JTable tableSearch;
 	private void setFullNameEnabled(boolean enabled) {
 		textSearchFirstName.setEnabled(!enabled);
 		textSearchMI.setEnabled(!enabled);
