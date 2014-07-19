@@ -27,11 +27,12 @@ import javax.swing.JButton;
 
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
-
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+
 import javax.swing.JScrollPane;
+import javax.swing.table.TableModel;
 
 
 public class LibraryManagement {
@@ -183,15 +184,16 @@ public class LibraryManagement {
 						+ " WHERE BOOK_COPIES.Book_id = BOOK.Book_id AND BOOK_AUTHORS.Book_id = BOOK.Book_id "
 						+ " AND BOOK_LOANS.Book_id = BOOK.Book_id AND BOOK_LOANS.Branch_id = BOOK_COPIES.Branch_id ";
 				Statement stmt = DBConnector.instance().createStatement();
+				
 				if(fullNameEnabled) {
-					String BookId = textSearchFullName.getText();	
+					String BookId = textSearchBookId.getText();	
 					if(!(BookId == null || BookId.equals("") || BookId.matches("\\s+"))) {
-						query += " AND BOOK.Book_id LIKE %" + BookId + "% ";
+						query += " AND BOOK.Book_id LIKE '%" + BookId + "%' ";
 					}
 					
 					String fullName = textSearchFullName.getText();	
 					if(!(fullName == null || fullName.equals("") || fullName.matches("\\s+"))) {
-						query += " AND Author_name LIKE %" + fullName + "% ";
+						query += " AND Author_name LIKE '%" + fullName + "%' ";
 					}
 					
 					query += " GROUP BY BOOK_COPIES.Branch_id;";
@@ -204,30 +206,56 @@ public class LibraryManagement {
 						if(null == rs) {
 							return;
 						}
-						/*ResultSetMetaData md = rs.getMetaData();
-						int columns = md.getColumnCount();
-						ArrayList<String> columnNames = new ArrayList<>();
-						for (int i = 1; i <= columns; i++) {
-			                columnNames.add( md.getColumnName(i) );
-			            }
-						while (rs.next()) {
-			                ArrayList<String> row = new ArrayList(columns);
-			                for (int i = 1; i <= columns; i++) {
-			                    row.add(rs.getObject(i) );
-			                }
-			            }*/
 						
 						ResultsModel model = new ResultsModel();
 						model.setResultSet(rs);
 						tableSearch.setModel(model);
 					
+					} catch (SQLException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}		
+				} else {
+					
+					String BookId = textSearchBookId.getText();	
+					if(!(BookId == null || BookId.equals("") || BookId.matches("\\s+"))) {
+						query += " AND BOOK.Book_id LIKE '%" + BookId + "%' ";
+					}
+					
+					String firstName = textSearchFirstName.getText();	
+					if(!(firstName == null || firstName.equals("") || firstName.matches("\\s+"))) {
+						query += " AND Fname LIKE '%" + firstName + "%' ";
+					}
+					
+					String MI = textSearchMI.getText();	
+					if(!(MI == null || MI.equals("") || MI.matches("\\s+"))) {
+						query += " AND MI LIKE '%" + MI + "%' ";
+					}
+					
+					String lastName = textSearchLastName.getText();	
+					if(!(lastName == null || lastName.equals("") || lastName.matches("\\s+"))) {
+						query += " AND Lname LIKE '%" + lastName + "%' ";
+					}
+					
+					query += " GROUP BY BOOK_COPIES.Branch_id;";
+					// while(!firstName.matches("^[^\\d\\s]+$"));
+					ResultSet rs = null;
+					
+					try {
+						System.out.println(query);
+						rs = stmt.executeQuery(query);
+						if(null == rs) {
+							return;
+						}
+						
+						ResultsModel model = new ResultsModel();
+						model.setResultSet(rs);
+						tableSearch.setModel(model);
 					
 					} catch (SQLException e1) {
 						// TODO Auto-generated catch block
 						e1.printStackTrace();
-					}
-					
-					
+					}		
 				}
 			}
 		});
@@ -235,6 +263,16 @@ public class LibraryManagement {
 		panelSearch.add(btnSearch);
 		
 		JButton btnClear = new JButton("Clear");
+		btnClear.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				
+				ResultsModel model = (ResultsModel) tableSearch.getModel();
+				model.setResultSet(null);
+				//tableSearch.setModel(model);
+				
+			}
+		});
 		btnClear.setBounds(424, 125, 117, 25);
 		panelSearch.add(btnClear);
 		

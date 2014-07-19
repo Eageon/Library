@@ -16,6 +16,36 @@ public class ResultsModel extends AbstractTableModel {
 	String[] columnNames = new String[0];
 	@SuppressWarnings("rawtypes")
 	Vector dataRows; // Empty vector of rows
+	
+	/**
+	 * Set the Model of table
+	 * @param results
+	 * @return number of columns
+	 */
+	public int setResultSetModel(ResultSet results) {
+		if (results == null) {
+			columnNames = new String[0]; // Reset the columns names
+			dataRows.clear(); // Remove all entries in the Vector
+			fireTableChanged(null); // Tell the table there is new model data
+			return 0;
+		}
+		
+		ResultSetMetaData metadata;
+		try {
+			metadata = results.getMetaData();
+			int columns = metadata.getColumnCount(); // Get number of columns
+			columnNames = new String[columns]; // Array to hold names
+
+			// Get the column names
+			for (int i = 0; i < columns; i++) {
+				columnNames[i] = metadata.getColumnLabel(i + 1);
+			}
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return columnNames.length;
+	}
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public void setResultSet(ResultSet results) {
@@ -26,18 +56,11 @@ public class ResultsModel extends AbstractTableModel {
 			fireTableChanged(null); // Tell the table there is new model data
 			return;
 		}
+		
+		int columns = setResultSetModel(results);
 
 		try {
-			ResultSetMetaData metadata = results.getMetaData();
-
-			int columns = metadata.getColumnCount(); // Get number of columns
-			columnNames = new String[columns]; // Array to hold names
-
-			// Get the column names
-			for (int i = 0; i < columns; i++) {
-				columnNames[i] = metadata.getColumnLabel(i + 1);
-			}
-
+			
 			// Get all rows.
 			dataRows = new Vector(); // New Vector to store the data
 			String[] rowData; // Stores one row
