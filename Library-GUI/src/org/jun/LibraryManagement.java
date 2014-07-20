@@ -183,12 +183,12 @@ public class LibraryManagement {
 						+ " FROM BOOK_COPIES, BOOK, BOOK_AUTHORS "
 						+ " WHERE BOOK_COPIES.Book_id = BOOK.Book_id AND BOOK_AUTHORS.Book_id = BOOK.Book_id "
 						+ "  ";*/
-				String query = "SELECT    B.Book_id, "
+				String query = "SELECT  DISTINCT  B.Book_id, "
 						+ 				" B.Title, "
-						+ 				" (SELECT GROUP_CONCAT(Author_name SEPARATOR ', ') AS Authors "
+						+ 				" (SELECT GROUP_CONCAT(Author_name SEPARATOR ', ') "
 						+ 				"  FROM BOOK B1, BOOK_AUTHORS A1  "
 						+ 				"  WHERE B1.Book_id = A1.Book_id AND B.Book_id = B1.Book_id  "
-						+ 				"  GROUP BY B1.Book_id), "
+						+ 				"  GROUP BY B1.Book_id) AS Authors, "
 						+ 				" C.Branch_id, "
 						+ 				" C.No_of_copies, "
 						+ 				" C.No_of_copies - "
@@ -211,7 +211,7 @@ public class LibraryManagement {
 						query += " AND A.Author_name LIKE '%" + fullName + "%' ";
 					}
 					
-					query += " GROUP BY BOOK_COPIES.Branch_id;";
+					query += " ;";
 					// while(!firstName.matches("^[^\\d\\s]+$"));
 					ResultSet rs = null;
 					
