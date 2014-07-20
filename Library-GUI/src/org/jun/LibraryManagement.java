@@ -7,6 +7,7 @@ import javax.swing.JFrame;
 import javax.swing.JMenuBar;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JTabbedPane;
 
 import java.awt.BorderLayout;
@@ -201,17 +202,24 @@ public class LibraryManagement {
 				Statement stmt = DBConnector.instance().createStatement();
 				
 				if(fullNameEnabled) {
+					boolean valid = false;
 					String BookId = textSearchBookId.getText();	
 					if(!(BookId == null || BookId.equals("") || BookId.matches("\\s+"))) {
 						query += " AND B.Book_id LIKE '%" + BookId + "%' ";
+						valid = true;
 					}
 					
 					String fullName = textSearchFullName.getText();	
 					if(!(fullName == null || fullName.equals("") || fullName.matches("\\s+"))) {
 						query += " AND A.Author_name LIKE '%" + fullName + "%' ";
+						valid = true;
 					}
 					
 					query += " ;";
+					if(!valid) {
+						JOptionPane.showMessageDialog(null, "Invalid searching infos");
+						return;
+					}
 					// while(!firstName.matches("^[^\\d\\s]+$"));
 					ResultSet rs = null;
 					
@@ -232,27 +240,37 @@ public class LibraryManagement {
 					}		
 				} else {
 					
+					boolean valid = false;
 					String BookId = textSearchBookId.getText();	
 					if(!(BookId == null || BookId.equals("") || BookId.matches("\\s+"))) {
-						query += " AND BOOK.Book_id LIKE '%" + BookId + "%' ";
+						query += " AND B.Book_id LIKE '%" + BookId + "%' ";
+						valid = true;
 					}
 					
 					String firstName = textSearchFirstName.getText();	
 					if(!(firstName == null || firstName.equals("") || firstName.matches("\\s+"))) {
 						query += " AND Fname LIKE '%" + firstName + "%' ";
+						valid = true;
 					}
 					
 					String MI = textSearchMI.getText();	
 					if(!(MI == null || MI.equals("") || MI.matches("\\s+"))) {
 						query += " AND MI LIKE '%" + MI + "%' ";
+						valid = true;
 					}
 					
 					String lastName = textSearchLastName.getText();	
 					if(!(lastName == null || lastName.equals("") || lastName.matches("\\s+"))) {
 						query += " AND Lname LIKE '%" + lastName + "%' ";
+						valid = true;
 					}
 					
-					query += " GROUP BY BOOK_COPIES.Branch_id;";
+					query += " ;";
+					
+					if(!valid) {
+						JOptionPane.showMessageDialog(null, "Invalid searching infos");
+						return;
+					}
 					// while(!firstName.matches("^[^\\d\\s]+$"));
 					ResultSet rs = null;
 					
