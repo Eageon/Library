@@ -33,7 +33,14 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 import javax.swing.JScrollPane;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.table.TableModel;
+import javax.swing.JSeparator;
+
+import java.awt.Color;
+import java.awt.event.InputMethodListener;
+import java.awt.event.InputMethodEvent;
 
 
 public class LibraryManagement {
@@ -316,9 +323,94 @@ public class LibraryManagement {
 		tableSearch = new JTable();
 		scrollPaneSearch.setViewportView(tableSearch);
 		
+		JButton btnCheckOut = new JButton("Check Out");
+		btnCheckOut.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				int row = tableSearch.getSelectedRow();
+				if(-1 == row) {
+					return;
+				}
+				
+				String bookId = (String) tableSearch.getValueAt(row, 0);
+				String branchId = (String) tableSearch.getValueAt(row, 3);
+				System.out.println(bookId + " " + branchId);
+			}
+		});
+		btnCheckOut.setBounds(262, 125, 117, 25);
+		panelSearch.add(btnCheckOut);
 		
-		JPanel panel_1 = new JPanel();
-		tabbedPane.addTab("New tab", null, panel_1, null);
+		
+		JPanel panelCheckOut = new JPanel();
+		tabbedPane.addTab("Check Out", null, panelCheckOut, null);
+		panelCheckOut.setLayout(null);
+		
+		textCheckOut = new JTextField();
+		textCheckOut.setBackground(Color.WHITE);
+		textCheckOut.setEditable(false);
+		textCheckOut.setFont(new Font("Dialog", Font.PLAIN, 15));
+		textCheckOut.setBounds(100, 46, 417, 30);
+		panelCheckOut.add(textCheckOut);
+		textCheckOut.setColumns(10);
+		
+		JLabel lblBookId_1 = new JLabel("Book ID");
+		lblBookId_1.setBounds(100, 120, 70, 15);
+		panelCheckOut.add(lblBookId_1);
+		
+		textCheckOutBookId = new JTextField();
+		textCheckOutBookId.getDocument().addDocumentListener(new DocumentListener() {
+			
+			@Override
+			public void removeUpdate(DocumentEvent e) {
+				// TODO Auto-generated method stub
+				if(10 != textCheckOutBookId.getText().length()) {
+					textCheckOutBookId.setText(null);
+					return;
+				}
+				textCheckOut.setText(getBookTitleById(textCheckOutBookId.getText()));
+			}
+			
+			@Override
+			public void insertUpdate(DocumentEvent e) {
+				// TODO Auto-generated method stub
+				if(10 != textCheckOutBookId.getText().length()) {
+					textCheckOutBookId.setText(null);
+					return;
+				}
+				textCheckOut.setText(getBookTitleById(textCheckOutBookId.getText()));
+			}
+			
+			@Override
+			public void changedUpdate(DocumentEvent e) {
+				// TODO Auto-generated method stub
+				if(10 != textCheckOutBookId.getText().length()) {
+					textCheckOutBookId.setText(null);
+					return;
+				}
+				textCheckOut.setText(getBookTitleById(textCheckOutBookId.getText()));
+			}
+		});
+		textCheckOutBookId.setBounds(217, 118, 114, 19);
+		panelCheckOut.add(textCheckOutBookId);
+		textCheckOutBookId.setColumns(10);
+		
+		JLabel lblBranchId = new JLabel("Branch ID");
+		lblBranchId.setBounds(378, 120, 70, 15);
+		panelCheckOut.add(lblBranchId);
+		
+		textCheckOutBranchId = new JTextField();
+		textCheckOutBranchId.setBounds(483, 118, 114, 19);
+		panelCheckOut.add(textCheckOutBranchId);
+		textCheckOutBranchId.setColumns(10);
+		
+		JLabel lblCardNo = new JLabel("Card NO");
+		lblCardNo.setBounds(100, 167, 70, 15);
+		panelCheckOut.add(lblCardNo);
+		
+		textCheckOutCardNo = new JTextField();
+		textCheckOutCardNo.setBounds(217, 165, 114, 19);
+		panelCheckOut.add(textCheckOutCardNo);
+		textCheckOutCardNo.setColumns(10);
 		
 		JPanel panel_2 = new JPanel();
 		tabbedPane.addTab("New tab", null, panel_2, null);
@@ -329,11 +421,40 @@ public class LibraryManagement {
 	
 	private boolean fullNameEnabled = true;
 	private JTable tableSearch;
+	private JTextField textCheckOut;
+	private JTextField textCheckOutBookId;
+	private JTextField textCheckOutBranchId;
+	private JTextField textCheckOutCardNo;
 	private void setFullNameEnabled(boolean enabled) {
 		textSearchFirstName.setEnabled(!enabled);
 		textSearchMI.setEnabled(!enabled);
 		textSearchLastName.setEnabled(!enabled);
 		textSearchFullName.setEnabled(enabled);
 		fullNameEnabled = enabled;
+	}
+	
+	private String getBookTitleById(String bookId) {
+		if((bookId == null || bookId.equals("") || bookId.matches("\\s+"))) {
+			return null;
+		}
+		String query = "SELECT Title FROM BOOK WHERE Book_id = " + bookId + "; ";
+		Statement stmt = DBConnector.instance().createStatement();
+		
+		ResultSet rs = null;
+		String title = null;
+		
+		try {
+			rs = stmt.executeQuery(query);
+			if(null == rs) {
+				return null;
+			}
+			if(rs.first()) {
+				title = rs.getString(1);
+			}
+		} catch (SQLException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		return title;
 	}
 }
