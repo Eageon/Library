@@ -178,22 +178,37 @@ public class LibraryManagement {
 		btnSearch.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent e) {
-				String query = "SELECT BOOK.Book_id, BOOK.Title, BOOK_AUTHORS.Author_name, "
-						+ " BOOK_COPIES.Branch_id, BOOK_COPIES.No_of_copies, COUNT(*) "
-						+ " FROM BOOK_COPIES, BOOK, BOOK_AUTHORS, BOOK_LOANS "
+				/*String query = "SELECT BOOK.Book_id, BOOK.Title, BOOK_AUTHORS.Author_name AS Authors, "
+						+ " BOOK_COPIES.Branch_id, BOOK_COPIES.No_of_copies "
+						+ " FROM BOOK_COPIES, BOOK, BOOK_AUTHORS "
 						+ " WHERE BOOK_COPIES.Book_id = BOOK.Book_id AND BOOK_AUTHORS.Book_id = BOOK.Book_id "
-						+ " AND BOOK_LOANS.Book_id = BOOK.Book_id AND BOOK_LOANS.Branch_id = BOOK_COPIES.Branch_id ";
+						+ "  ";*/
+				String query = "SELECT    B.Book_id, "
+						+ 				" B.Title, "
+						+ 				" (SELECT GROUP_CONCAT(Author_name SEPARATOR ', ') AS Authors "
+						+ 				"  FROM BOOK B1, BOOK_AUTHORS A1  "
+						+ 				"  WHERE B1.Book_id = A1.Book_id AND B.Book_id = B1.Book_id  "
+						+ 				"  GROUP BY B1.Book_id), "
+						+ 				" C.Branch_id, "
+						+ 				" C.No_of_copies, "
+						+ 				" C.No_of_copies - "
+						+ 						" (SELECT COUNT(*) "
+						+ 						"  FROM BOOK_LOANS L "
+						+ 						"  WHERE B.Book_id = L.Book_id AND C.Branch_id = L.Branch_id) "
+						+ 					" AS Available "
+						+ 		" FROM BOOK B, BOOK_COPIES C, BOOK_AUTHORS A"
+						+ 		" WHERE B.Book_id = C.Book_id AND A.Book_id = B.Book_id ";
 				Statement stmt = DBConnector.instance().createStatement();
 				
 				if(fullNameEnabled) {
 					String BookId = textSearchBookId.getText();	
 					if(!(BookId == null || BookId.equals("") || BookId.matches("\\s+"))) {
-						query += " AND BOOK.Book_id LIKE '%" + BookId + "%' ";
+						query += " AND B.Book_id LIKE '%" + BookId + "%' ";
 					}
 					
 					String fullName = textSearchFullName.getText();	
 					if(!(fullName == null || fullName.equals("") || fullName.matches("\\s+"))) {
-						query += " AND Author_name LIKE '%" + fullName + "%' ";
+						query += " AND A.Author_name LIKE '%" + fullName + "%' ";
 					}
 					
 					query += " GROUP BY BOOK_COPIES.Branch_id;";
