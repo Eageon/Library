@@ -35,17 +35,13 @@ import java.sql.Statement;
 import javax.swing.JScrollPane;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import javax.swing.table.TableModel;
-import javax.swing.JSeparator;
-
 import java.awt.Color;
-import java.awt.event.InputMethodListener;
-import java.awt.event.InputMethodEvent;
 
 
 public class LibraryManagement {
 
 	private JFrame frmLibraryManagement;
+	JTabbedPane tabbedPane;
 	private JTextField textSearchBookId;
 	private JTextField textSearchBookTitle;
 	private JTextField textSearchFullName;
@@ -94,7 +90,7 @@ public class LibraryManagement {
 		JMenuItem mntmOpen = new JMenuItem("Open");
 		mnFile.add(mntmOpen);
 		
-		JTabbedPane tabbedPane = new JTabbedPane(JTabbedPane.TOP);
+		tabbedPane = new JTabbedPane(JTabbedPane.TOP);
 		frmLibraryManagement.getContentPane().add(tabbedPane, BorderLayout.CENTER);
 		
 		ButtonGroup partNameGroup = new ButtonGroup();
@@ -334,7 +330,9 @@ public class LibraryManagement {
 				
 				String bookId = (String) tableSearch.getValueAt(row, 0);
 				String branchId = (String) tableSearch.getValueAt(row, 3);
-				System.out.println(bookId + " " + branchId);
+				textCheckOutBookId.setText(bookId);
+				textCheckOutBranchId.setText(branchId);
+				tabbedPane.setSelectedIndex(1);
 			}
 		});
 		btnCheckOut.setBounds(262, 125, 117, 25);
@@ -411,6 +409,36 @@ public class LibraryManagement {
 		textCheckOutCardNo.setBounds(217, 165, 114, 19);
 		panelCheckOut.add(textCheckOutCardNo);
 		textCheckOutCardNo.setColumns(10);
+		
+		JButton btnCheckOut_1 = new JButton("Check Out");
+		btnCheckOut_1.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				String bookId = textCheckOutBookId.getText();
+				if((bookId == null || bookId.equals("") || bookId.matches("\\s+"))) {
+					return;
+				}
+				String branchId = textCheckOutBranchId.getText();
+				if((branchId == null || branchId.equals("") || branchId.matches("\\s+"))) {
+					return;
+				}
+				String cardNo = textCheckOutBranchId.getText();
+				if((cardNo == null || cardNo.equals("") || cardNo.matches("\\s+"))) {
+					return;
+				}
+				String query = "INSERT INTO BOOK_LOANS (Book_id, Branch_id, Card_no) values ( " 
+						+ bookId + "," + branchId + ", " + cardNo + "); ";
+				Statement stmt = DBConnector.instance().createStatement();
+				try {
+					stmt.executeUpdate(query);
+				} catch (SQLException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
+			}
+		});
+		btnCheckOut_1.setBounds(100, 251, 117, 25);
+		panelCheckOut.add(btnCheckOut_1);
 		
 		JPanel panel_2 = new JPanel();
 		tabbedPane.addTab("New tab", null, panel_2, null);
