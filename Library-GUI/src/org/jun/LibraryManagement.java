@@ -470,6 +470,11 @@ public class LibraryManagement {
 					return;
 				}
 				
+				if(!existBorrower(cardNo)) {
+					JOptionPane.showMessageDialog(null, "Card NO " + bookId + " does NOT exist");
+					return;
+				}
+				
 				int copies = getNumCopies(bookId, branchId);
 				if(copies < 0) {
 					return;
@@ -489,15 +494,16 @@ public class LibraryManagement {
 					return;
 				}
 				if(loansPerson >= 3) {
-					JOptionPane.showMessageDialog(null, "You have checked out 3 books, can not check out more");
+					JOptionPane.showMessageDialog(null, "You have checked out 3 books, can NOT check out more");
 					return;
 				}
 				
 				String query = "INSERT INTO BOOK_LOANS (Book_id, Branch_id, Card_no, Date_out, Due_date) "
-						+ " values ( " + bookId + "," + branchId + ", " + cardNo + ", "
+						+ " values ( '" + bookId + "','" + branchId + "', '" + cardNo + "', "
 						+ " CURDATE(), DATE_ADD(CURDATE(), INTERVAL 14 DAY)" + "); ";
 				Statement stmt = DBConnector.instance().createStatement();
 				try {
+					//System.out.println(query);
 					stmt.executeUpdate(query);
 					
 				} catch (SQLException e1) {
@@ -660,13 +666,26 @@ public class LibraryManagement {
 				}
 				
 				String loanId = (String) tableCheckIn.getValueAt(row, 0);
-				String dueDate = getDueDate(loanId);
 				
 				String query = "UPDATE BOOK_LOANS SET Date_in = CURDATE() WHERE Loan_id = " + loanId + " ;";
 				Statement stmt = DBConnector.instance().createStatement();
 		
 				try {
 					stmt.executeUpdate(query);
+					String queryDiff = "SELECT DATEDIFF(Date_in, Due_date) FROM BOOK_LOANS WHERE Loan_id = " + loanId + " ;";
+					stmt = DBConnector.instance().createStatement();
+					ResultSet rs = stmt.executeQuery(queryDiff);
+					if(!rs.first()) {
+						return;
+					}
+					int diff = rs.getInt(1);
+					System.out.println(diff);
+					
+					if(diff > 0) {
+						setFine(loanId, diff);
+						notifyFine(loanId);
+					}
+					
 				} catch (SQLException e1) {
 					e1.printStackTrace();
 				}
@@ -684,6 +703,9 @@ public class LibraryManagement {
 		
 		tableCheckIn = new JTable();
 		scrollPane.setViewportView(tableCheckIn);
+		
+		JPanel panelFine = new JPanel();
+		tabbedPane.addTab("Fine Payment", null, panelFine, null);
 		
 		JPanel panelBorrower = new JPanel();
 		tabbedPane.addTab("Borrower Management", null, panelBorrower, null);
@@ -866,6 +888,31 @@ public class LibraryManagement {
 		return copies;
 	}
 	
+	private boolean existBorrower(String cardNo) {
+		if((cardNo == null || cardNo.equals("") || cardNo.matches("\\s+"))) {
+			return false;
+		}
+		
+		String query = "SELECT * FROM BORROWER WHERE Card_no = '" + cardNo + "' ; ";
+		
+		boolean exist = false;
+		Statement stmt = DBConnector.instance().createStatement();
+		ResultSet rs = null;
+		try {
+			rs = stmt.executeQuery(query);
+			if(null == rs) {
+				return false;
+			}
+			if(rs.first()) {
+				exist = true;
+			}
+		} catch (SQLException e1) {
+			e1.printStackTrace();
+		}
+		
+		return exist;
+	}
+	
 	private int getLoansPerCard(String cardNo) {
 		if((cardNo == null || cardNo.equals("") || cardNo.matches("\\s+"))) {
 			return -1;
@@ -966,6 +1013,105 @@ public class LibraryManagement {
 			e1.printStackTrace();
 		}
 		return due;
+	}
+	
+	private void notifyFine(String loanId) {
+		JOptionPane.showMessageDialog(null, "Borrower have to pay a FINE");
+		
+	}
+	
+	/** 
+	 * @param loanId
+	 * @return 0.0 if no fine, or -1 if paid
+	 */
+	private float getFine(String loanId) {
+		String query = "SELECT Fine_amt, Paid FROM FINE ";
+		Statement stmt = DBConnector.instance().createStatement();
+		float fine = (float) 0.0;
+
+		query += " WHERE Loan_id = " + loanId + "; ";
+		ResultSet rs = null;
+		
+		try {
+			rs = stmt.executeQuery(query);
+			if(rs == null) {
+				return (float) 0.0;
+			}
+			
+			if(!rs.first()) {
+				return 0;
+			}
+			
+			if(rs.getBoolean(2)) {
+				return -1;
+			}
+			
+			fine = rs.getFloat(1);
+			
+		} catch (SQLException e1) {
+			e1.printStackTrace();
+		}
+		return fine;
+	}
+	
+	private float getEstimatedFine(String loanId) {
+		String query = "SELECT DATEDIFF(CURDATE(), Due_date) FROM BOOK_LOANS ";
+		Statement stmt = DBConnector.instance().createStatement();
+
+		query += " WHERE Loan_id = " + loanId + "; ";
+		ResultSet rs = null;
+		float fine = 0;
+		
+		try {
+			rs = stmt.executeQuery(query);
+			if(rs == null) {
+				return (float) 0.0;
+			}
+			
+			if(!rs.first()) {
+				return 0;
+			}
+			
+			int days = rs.getInt(1);
+			if(days > 0) {
+				fine = (float) (0.25 * rs.getInt(1));
+			}		
+		} catch (SQLException e1) {
+			e1.printStackTrace();
+		}
+		return fine;
+	}
+	
+	private void setFine(String loanId, int days) {
+		String query = "UPDATE FINE SET Fine_amt = ";
+		Statement stmt = DBConnector.instance().createStatement();
+		
+		float fine = (float)0.25 * (float)days;
+		query += fine;
+		query += " WHERE Loan_id = " + loanId + "; ";
+		
+		try {
+			stmt.executeUpdate(query);
+			
+		} catch (SQLException e1) {
+			e1.printStackTrace();
+		}
+	}
+	
+	private void payFine(String loanId, float amount) {
+			String query = "UPDATE FINE SET Fine_amt = ";
+			Statement stmt = DBConnector.instance().createStatement();
+			
+			float fine = amount;
+			query += fine;
+			query += " WHERE Loan_id = " + loanId + "; ";
+			
+			try {
+				stmt.executeUpdate(query);
+				
+			} catch (SQLException e1) {
+				e1.printStackTrace();
+			}
 	}
 	
 	private String getDueDateFromCurrent() {
