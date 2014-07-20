@@ -35,6 +35,7 @@ import java.sql.Statement;
 import javax.swing.JScrollPane;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+
 import java.awt.Color;
 
 
@@ -361,28 +362,24 @@ public class LibraryManagement {
 			@Override
 			public void removeUpdate(DocumentEvent e) {
 				// TODO Auto-generated method stub
-				if(10 != textCheckOutBookId.getText().length()) {
-					textCheckOutBookId.setText(null);
-					return;
-				}
-				textCheckOut.setText(getBookTitleById(textCheckOutBookId.getText()));
+				doUpdate();
 			}
 			
 			@Override
 			public void insertUpdate(DocumentEvent e) {
 				// TODO Auto-generated method stub
-				if(10 != textCheckOutBookId.getText().length()) {
-					textCheckOutBookId.setText(null);
-					return;
-				}
-				textCheckOut.setText(getBookTitleById(textCheckOutBookId.getText()));
+				doUpdate();
 			}
 			
 			@Override
 			public void changedUpdate(DocumentEvent e) {
 				// TODO Auto-generated method stub
+				doUpdate();
+			}
+			
+			private void doUpdate() {
 				if(10 != textCheckOutBookId.getText().length()) {
-					textCheckOutBookId.setText(null);
+					textCheckOut.setText(null);
 					return;
 				}
 				textCheckOut.setText(getBookTitleById(textCheckOutBookId.getText()));
@@ -397,16 +394,64 @@ public class LibraryManagement {
 		panelCheckOut.add(lblBranchId);
 		
 		textCheckOutBranchId = new JTextField();
-		textCheckOutBranchId.setBounds(483, 118, 114, 19);
+		textCheckOutBranchId.getDocument().addDocumentListener(new DocumentListener() {
+			
+			@Override
+			public void removeUpdate(DocumentEvent e) {
+				// TODO Auto-generated method stub
+				doUpdate();
+			}
+			
+			@Override
+			public void insertUpdate(DocumentEvent e) {
+				// TODO Auto-generated method stub
+				doUpdate();
+			}
+			
+			@Override
+			public void changedUpdate(DocumentEvent e) {
+				// TODO Auto-generated method stub
+				doUpdate();
+			}
+			
+			private void doUpdate() {
+				if(10 != textCheckOutBookId.getText().length()) {
+					textCheckOut.setText(null);
+					return;
+				}
+				if(textCheckOutBranchId.getText().length() < 1) {
+					textCheckOutAvailable.setText(null);
+					textCheckOutCopies.setText(null);
+					return;
+				}
+				String bookId = textCheckOutBookId.getText();
+				String branchId = textCheckOutBranchId.getText();
+				int copies = getNumCopies(bookId, branchId);
+				if(copies < 0) {
+					textCheckOutAvailable.setText(null);
+					textCheckOutCopies.setText(null);
+					return;
+				}
+				int checkedout = getNumBooksCheckedOut(bookId, branchId);
+				if(checkedout < 0) {
+					textCheckOutAvailable.setText(null);
+					textCheckOutCopies.setText(null);
+					return;
+				}
+				textCheckOutAvailable.setText( "" + (copies - checkedout));
+				textCheckOutCopies.setText("" + copies);
+			}
+		});
+		textCheckOutBranchId.setBounds(529, 118, 114, 19);
 		panelCheckOut.add(textCheckOutBranchId);
 		textCheckOutBranchId.setColumns(10);
 		
 		JLabel lblCardNo = new JLabel("Card NO");
-		lblCardNo.setBounds(100, 167, 70, 15);
+		lblCardNo.setBounds(100, 189, 70, 15);
 		panelCheckOut.add(lblCardNo);
 		
 		textCheckOutCardNo = new JTextField();
-		textCheckOutCardNo.setBounds(217, 165, 114, 19);
+		textCheckOutCardNo.setBounds(217, 187, 114, 19);
 		panelCheckOut.add(textCheckOutCardNo);
 		textCheckOutCardNo.setColumns(10);
 		
@@ -422,23 +467,84 @@ public class LibraryManagement {
 				if((branchId == null || branchId.equals("") || branchId.matches("\\s+"))) {
 					return;
 				}
-				String cardNo = textCheckOutBranchId.getText();
+				String cardNo = textCheckOutCardNo.getText();
 				if((cardNo == null || cardNo.equals("") || cardNo.matches("\\s+"))) {
 					return;
 				}
-				String query = "INSERT INTO BOOK_LOANS (Book_id, Branch_id, Card_no) values ( " 
-						+ bookId + "," + branchId + ", " + cardNo + "); ";
+				
+				int copies = getNumCopies(bookId, branchId);
+				if(copies < 0) {
+					return;
+				}
+				int checkedout = getNumBooksCheckedOut(bookId, branchId);
+				if(checkedout < 0) {
+					return;
+				}
+				
+				if(checkedout >= copies) {
+					JOptionPane.showMessageDialog(null, "All copies of " + bookId + " ckecked out. You can not check out");
+					return;
+				}
+				
+				int loansPerson = getLoansPerCard(cardNo);
+				if(loansPerson < 0) {
+					return;
+				}
+				if(loansPerson >= 3) {
+					JOptionPane.showMessageDialog(null, "You have checked out 3 books, can not check out more");
+					return;
+				}
+				
+				String query = "INSERT INTO BOOK_LOANS (Book_id, Branch_id, Card_no, Date_out, Due_date) "
+						+ " values ( " + bookId + "," + branchId + ", " + cardNo + ", "
+						+ " CURDATE(), DATE_ADD(CURDATE(), INTERVAL 14 DAY)" + "); ";
 				Statement stmt = DBConnector.instance().createStatement();
 				try {
 					stmt.executeUpdate(query);
+					
 				} catch (SQLException e1) {
 					// TODO Auto-generated catch block
 					e1.printStackTrace();
 				}
+				JOptionPane.showMessageDialog(null, "Check out " + bookId + " succeed. Due date is " + getDueDateFromCurrent());
+				copies = getNumCopies(bookId, branchId);
+				if(copies < 0) {
+					textCheckOutAvailable.setText(null);
+					textCheckOutCopies.setText(null);
+					return;
+				}
+				checkedout = getNumBooksCheckedOut(bookId, branchId);
+				if(checkedout < 0) {
+					textCheckOutAvailable.setText(null);
+					textCheckOutCopies.setText(null);
+					return;
+				}
+				textCheckOutAvailable.setText( "" + (copies - checkedout));
+				textCheckOutCopies.setText("" + copies);
 			}
 		});
 		btnCheckOut_1.setBounds(100, 251, 117, 25);
 		panelCheckOut.add(btnCheckOut_1);
+		
+		JLabel lblAvailableCopies = new JLabel("Available");
+		lblAvailableCopies.setBounds(100, 147, 92, 15);
+		panelCheckOut.add(lblAvailableCopies);
+		
+		textCheckOutAvailable = new JTextField();
+		textCheckOutAvailable.setEditable(false);
+		textCheckOutAvailable.setBounds(217, 149, 50, 19);
+		panelCheckOut.add(textCheckOutAvailable);
+		textCheckOutAvailable.setColumns(10);
+		
+		JLabel lblCopiesInBranch = new JLabel("Copies in Branch");
+		lblCopiesInBranch.setBounds(377, 151, 140, 15);
+		panelCheckOut.add(lblCopiesInBranch);
+		
+		textCheckOutCopies = new JTextField();
+		textCheckOutCopies.setEditable(false);
+		textCheckOutCopies.setBounds(529, 145, 50, 19);
+		panelCheckOut.add(textCheckOutCopies);
+		textCheckOutCopies.setColumns(10);
 		
 		JPanel panel_2 = new JPanel();
 		tabbedPane.addTab("New tab", null, panel_2, null);
@@ -453,12 +559,100 @@ public class LibraryManagement {
 	private JTextField textCheckOutBookId;
 	private JTextField textCheckOutBranchId;
 	private JTextField textCheckOutCardNo;
+	private JTextField textCheckOutAvailable;
+	private JTextField textCheckOutCopies;
 	private void setFullNameEnabled(boolean enabled) {
 		textSearchFirstName.setEnabled(!enabled);
 		textSearchMI.setEnabled(!enabled);
 		textSearchLastName.setEnabled(!enabled);
 		textSearchFullName.setEnabled(enabled);
 		fullNameEnabled = enabled;
+	}
+	
+	private int getNumBooksCheckedOut(String bookId, String branchId) {
+		if((bookId == null || bookId.equals("") || bookId.matches("\\s+"))) {
+			return -1;
+		}
+		if((branchId == null || branchId.equals("") || branchId.matches("\\s+"))) {
+			return -1;
+		}
+		
+		String query = "SELECT COUNT(*) FROM BOOK_LOANS WHERE Book_id = " + bookId
+				+ " AND Branch_id = " + branchId +" ; ";
+		
+		int copies = -1;
+		Statement stmt = DBConnector.instance().createStatement();
+		ResultSet rs = null;
+		try {
+			rs = stmt.executeQuery(query);
+			if(null == rs) {
+				return -1;
+			}
+			if(rs.first()) {
+				copies = rs.getInt(1);
+			}
+		} catch (SQLException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		
+		return copies;
+	}
+	
+	private int getLoansPerCard(String cardNo) {
+		if((cardNo == null || cardNo.equals("") || cardNo.matches("\\s+"))) {
+			return -1;
+		}
+		
+		String query = "SELECT COUNT(*) FROM BOOK_LOANS WHERE Card_no = " + cardNo + " ; ";
+		
+		int loans = -1;
+		Statement stmt = DBConnector.instance().createStatement();
+		ResultSet rs = null;
+		try {
+			rs = stmt.executeQuery(query);
+			if(null == rs) {
+				return -1;
+			}
+			if(rs.first()) {
+				loans = rs.getInt(1);
+			}
+		} catch (SQLException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		
+		return loans;
+	}
+	
+	private int getNumCopies(String bookId, String branchId) {
+		if((bookId == null || bookId.equals("") || bookId.matches("\\s+"))) {
+			return -1;
+		}
+		if((branchId == null || branchId.equals("") || branchId.matches("\\s+"))) {
+			return -1;
+		}
+		
+		String query = "SELECT No_of_copies FROM BOOK_COPIES WHERE Book_id = " + bookId
+				+ " AND Branch_id = " + branchId +" ; ";
+		
+		int copies = -1;
+		Statement stmt = DBConnector.instance().createStatement();
+		ResultSet rs = null;
+		try {
+			rs = stmt.executeQuery(query);
+			if(null == rs) {
+				return -1;
+			}
+			if(rs.first()) {
+				copies = rs.getInt(1);
+			}
+		} catch (SQLException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		
+		return copies;
 	}
 	
 	private String getBookTitleById(String bookId) {
@@ -484,5 +678,27 @@ public class LibraryManagement {
 			e1.printStackTrace();
 		}
 		return title;
+	}
+	
+	private String getDueDateFromCurrent() {
+		String query = "SELECT DATE_ADD(CURDATE(), INTERVAL 14 DAY);";
+		Statement stmt = DBConnector.instance().createStatement();
+		
+		ResultSet rs = null;
+		String due = null;
+		
+		try {
+			rs = stmt.executeQuery(query);
+			if(null == rs) {
+				return null;
+			}
+			if(rs.first()) {
+				due = rs.getString(1);
+			}
+		} catch (SQLException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		return due;
 	}
 }
