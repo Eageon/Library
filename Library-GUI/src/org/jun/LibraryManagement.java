@@ -38,6 +38,10 @@ import javax.swing.event.DocumentListener;
 
 import java.awt.Color;
 
+import javax.swing.JTextPane;
+import javax.swing.JComboBox;
+import javax.swing.DefaultComboBoxModel;
+
 
 public class LibraryManagement {
 
@@ -49,6 +53,7 @@ public class LibraryManagement {
 	private JTextField textSearchFirstName;
 	private JTextField textSearchMI;
 	private JTextField textSearchLastName;
+	private JComboBox comboBowState;
 
 	/**
 	 * Launch the application.
@@ -76,6 +81,7 @@ public class LibraryManagement {
 	/**
 	 * Initialize the contents of the frame.
 	 */
+	@SuppressWarnings("unchecked")
 	private void initialize() {
 		frmLibraryManagement = new JFrame();
 		frmLibraryManagement.setTitle("Library Management");
@@ -239,7 +245,6 @@ public class LibraryManagement {
 						tableSearch.setModel(model);
 					
 					} catch (SQLException e1) {
-						// TODO Auto-generated catch block
 						e1.printStackTrace();
 					}		
 				} else {
@@ -290,7 +295,6 @@ public class LibraryManagement {
 						tableSearch.setModel(model);
 					
 					} catch (SQLException e1) {
-						// TODO Auto-generated catch block
 						e1.printStackTrace();
 					}		
 				}
@@ -341,14 +345,14 @@ public class LibraryManagement {
 		
 		
 		JPanel panelCheckOut = new JPanel();
-		tabbedPane.addTab("Check Out", null, panelCheckOut, null);
+		tabbedPane.addTab("Book Check Out", null, panelCheckOut, null);
 		panelCheckOut.setLayout(null);
 		
 		textCheckOut = new JTextField();
 		textCheckOut.setBackground(Color.WHITE);
 		textCheckOut.setEditable(false);
 		textCheckOut.setFont(new Font("Dialog", Font.PLAIN, 15));
-		textCheckOut.setBounds(100, 46, 417, 30);
+		textCheckOut.setBounds(100, 46, 543, 30);
 		panelCheckOut.add(textCheckOut);
 		textCheckOut.setColumns(10);
 		
@@ -361,19 +365,16 @@ public class LibraryManagement {
 			
 			@Override
 			public void removeUpdate(DocumentEvent e) {
-				// TODO Auto-generated method stub
 				doUpdate();
 			}
 			
 			@Override
 			public void insertUpdate(DocumentEvent e) {
-				// TODO Auto-generated method stub
 				doUpdate();
 			}
 			
 			@Override
 			public void changedUpdate(DocumentEvent e) {
-				// TODO Auto-generated method stub
 				doUpdate();
 			}
 			
@@ -398,19 +399,16 @@ public class LibraryManagement {
 			
 			@Override
 			public void removeUpdate(DocumentEvent e) {
-				// TODO Auto-generated method stub
 				doUpdate();
 			}
 			
 			@Override
 			public void insertUpdate(DocumentEvent e) {
-				// TODO Auto-generated method stub
 				doUpdate();
 			}
 			
 			@Override
 			public void changedUpdate(DocumentEvent e) {
-				// TODO Auto-generated method stub
 				doUpdate();
 			}
 			
@@ -503,7 +501,6 @@ public class LibraryManagement {
 					stmt.executeUpdate(query);
 					
 				} catch (SQLException e1) {
-					// TODO Auto-generated catch block
 					e1.printStackTrace();
 				}
 				JOptionPane.showMessageDialog(null, "Check out " + bookId + " succeed. Due date is " + getDueDateFromCurrent());
@@ -546,11 +543,272 @@ public class LibraryManagement {
 		panelCheckOut.add(textCheckOutCopies);
 		textCheckOutCopies.setColumns(10);
 		
-		JPanel panel_2 = new JPanel();
-		tabbedPane.addTab("New tab", null, panel_2, null);
+		JPanel panelCheckIn = new JPanel();
+		tabbedPane.addTab("Book Check In", null, panelCheckIn, null);
+		panelCheckIn.setLayout(null);
 		
-		JPanel panel_3 = new JPanel();
-		tabbedPane.addTab("New tab", null, panel_3, null);
+		JLabel labelCheckIn = new JLabel("Book ID");
+		labelCheckIn.setFont(new Font("Dialog", Font.BOLD, 13));
+		labelCheckIn.setBounds(36, 24, 70, 19);
+		panelCheckIn.add(labelCheckIn);
+		
+		textCheckInBookId = new JTextField();
+		textCheckInBookId.setFont(new Font("Dialog", Font.PLAIN, 13));
+		textCheckInBookId.setColumns(10);
+		textCheckInBookId.setBounds(140, 24, 167, 19);
+		panelCheckIn.add(textCheckInBookId);
+		
+		JLabel lblCardNo_1 = new JLabel("Card NO");
+		lblCardNo_1.setFont(new Font("Dialog", Font.BOLD, 13));
+		lblCardNo_1.setBounds(342, 26, 90, 15);
+		panelCheckIn.add(lblCardNo_1);
+		
+		textCheckInCardNo = new JTextField();
+		textCheckInCardNo.setFont(new Font("Dialog", Font.PLAIN, 13));
+		textCheckInCardNo.setColumns(10);
+		textCheckInCardNo.setBounds(463, 24, 147, 19);
+		panelCheckIn.add(textCheckInCardNo);
+		
+		textCheckInBowFirstName = new JTextField();
+		textCheckInBowFirstName.setEnabled(false);
+		textCheckInBowFirstName.setColumns(10);
+		textCheckInBowFirstName.setBounds(140, 57, 167, 19);
+		panelCheckIn.add(textCheckInBowFirstName);
+		
+		JLabel labelCheckInBorrow = new JLabel("First Name");
+		labelCheckInBorrow.setBounds(36, 55, 132, 23);
+		panelCheckIn.add(labelCheckInBorrow);
+		
+		JLabel label_3 = new JLabel("Last Name");
+		label_3.setBounds(342, 59, 90, 15);
+		panelCheckIn.add(label_3);
+		
+		textCheckInBowLastName = new JTextField();
+		textCheckInBowLastName.setEnabled(false);
+		textCheckInBowLastName.setColumns(10);
+		textCheckInBowLastName.setBounds(463, 57, 147, 19);
+		panelCheckIn.add(textCheckInBowLastName);
+		
+		JButton btnSearchLoan = new JButton("Search Loan");
+		btnSearchLoan.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				String query = "SELECT Loan_id, Book_id, Branch_id, L.Card_no, Date_out, Due_date"
+						+ " FROM BOOK_LOANS L JOIN BORROWER B ON L.Card_no = B.Card_no "
+						+ " WHERE Date_in IS NULL ";
+				
+				boolean valid = false;
+				String BookId = textCheckInBookId.getText();	
+				if(!(BookId == null || BookId.equals("") || BookId.matches("\\s+"))) {
+					query += " AND L.Book_id LIKE '%" + BookId + "%' ";
+					valid = true;
+				}
+				
+				String cardNo = textCheckInCardNo.getText();	
+				if(!(cardNo == null || cardNo.equals("") || cardNo.matches("\\s+"))) {
+					query += " AND L.Card_no LIKE '%" + cardNo + "%' ";
+					valid = true;
+				}
+				
+				String firstName = textCheckInBowFirstName.getText();	
+				if(!(firstName == null || firstName.equals("") || firstName.matches("\\s+"))) {
+					query += " AND B.Fname LIKE '%" + firstName + "%' ";
+					valid = true;
+				}
+				
+				String lastName = textCheckInBowLastName.getText();	
+				if(!(lastName == null || lastName.equals("") || lastName.matches("\\s+"))) {
+					query += " AND B.Lname LIKE '%" + lastName + "%' ";
+					valid = true;
+				}
+				
+				query += " ;";
+				if(!valid) {
+					JOptionPane.showMessageDialog(null, "Invalid searching infos");
+					return;
+				}
+				// while(!firstName.matches("^[^\\d\\s]+$"));
+				ResultSet rs = null;
+				Statement stmt = DBConnector.instance().createStatement();
+				
+				try {
+					System.out.println(query);
+					rs = stmt.executeQuery(query);
+					if(null == rs) {
+						return;
+					}
+					
+					ResultsModel model = new ResultsModel();
+					model.setResultSet(rs);
+					tableCheckIn.setModel(model);
+				
+				} catch (SQLException e1) {
+					e1.printStackTrace();
+				}	
+			}
+		});
+		btnSearchLoan.setBounds(143, 100, 132, 25);
+		panelCheckIn.add(btnSearchLoan);
+		
+		JButton btnCheckIn = new JButton("Check In");
+		btnCheckIn.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				int row = tableCheckIn.getSelectedRow();
+				if(-1 == row) {
+					return;
+				}
+				
+				String loanId = (String) tableCheckIn.getValueAt(row, 0);
+				String dueDate = getDueDate(loanId);
+				
+				String query = "UPDATE BOOK_LOANS SET Date_in = CURDATE() WHERE Loan_id = " + loanId + " ;";
+				Statement stmt = DBConnector.instance().createStatement();
+		
+				try {
+					stmt.executeUpdate(query);
+				} catch (SQLException e1) {
+					e1.printStackTrace();
+				}
+				((ResultsModel)tableCheckIn.getModel()).removeRow(row);
+				JOptionPane.showMessageDialog(null, "The Book checked in");
+				// TODO Book Title print
+			}
+		});
+		btnCheckIn.setBounds(465, 100, 117, 25);
+		panelCheckIn.add(btnCheckIn);
+		
+		JScrollPane scrollPane = new JScrollPane();
+		scrollPane.setBounds(12, 152, 660, 237);
+		panelCheckIn.add(scrollPane);
+		
+		tableCheckIn = new JTable();
+		scrollPane.setViewportView(tableCheckIn);
+		
+		JPanel panelBorrower = new JPanel();
+		tabbedPane.addTab("Borrower Management", null, panelBorrower, null);
+		panelBorrower.setLayout(null);
+		
+		JLabel lblNewLabel = new JLabel("First Name");
+		lblNewLabel.setBounds(82, 52, 80, 15);
+		panelBorrower.add(lblNewLabel);
+		
+		textBowFirstName = new JTextField();
+		textBowFirstName.setBounds(180, 50, 114, 19);
+		panelBorrower.add(textBowFirstName);
+		textBowFirstName.setColumns(10);
+		
+		JLabel lblNewLabel_1 = new JLabel("Last Name");
+		lblNewLabel_1.setBounds(354, 52, 93, 15);
+		panelBorrower.add(lblNewLabel_1);
+		
+		textBowLastName = new JTextField();
+		textBowLastName.setBounds(483, 50, 114, 19);
+		panelBorrower.add(textBowLastName);
+		textBowLastName.setColumns(10);
+		
+		JLabel lblNewLabel_2 = new JLabel("Address");
+		lblNewLabel_2.setBounds(82, 104, 70, 15);
+		panelBorrower.add(lblNewLabel_2);
+		
+		textBowAddress = new JTextField();
+		textBowAddress.setBounds(180, 100, 114, 19);
+		panelBorrower.add(textBowAddress);
+		textBowAddress.setColumns(10);
+		
+		JLabel lblNewLabel_3 = new JLabel("City");
+		lblNewLabel_3.setBounds(82, 143, 70, 15);
+		panelBorrower.add(lblNewLabel_3);
+		
+		textBowCity = new JTextField();
+		textBowCity.setBounds(180, 141, 114, 19);
+		panelBorrower.add(textBowCity);
+		textBowCity.setColumns(10);
+		
+		JLabel lblNewLabel_4 = new JLabel("State");
+		lblNewLabel_4.setBounds(82, 189, 70, 15);
+		panelBorrower.add(lblNewLabel_4);
+		
+		comboBowState = new JComboBox();
+		comboBowState.setModel(new DefaultComboBoxModel(new String[] {"AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA", "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD", "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ", "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC", "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY"}));
+		comboBowState.setBounds(180, 184, 51, 24);
+		panelBorrower.add(comboBowState);
+		
+		JLabel lblNewLabel_5 = new JLabel("ZIP");
+		lblNewLabel_5.setBounds(354, 189, 70, 15);
+		panelBorrower.add(lblNewLabel_5);
+		
+		textBowZIP = new JTextField();
+		textBowZIP.setBounds(483, 187, 114, 19);
+		panelBorrower.add(textBowZIP);
+		textBowZIP.setColumns(10);
+		
+		JButton btnNewBorrower = new JButton("Add New Borrower");
+		btnNewBorrower.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				String firstName = textBowFirstName.getText();	
+				if((firstName == null || firstName.equals("") || firstName.matches("\\s+"))) {
+					return;
+				}
+				String lastName = textBowLastName.getText();	
+				if((lastName == null || lastName.equals("") || lastName.matches("\\s+"))) {
+					return;
+				}
+				String address = textBowAddress.getText();	
+				if((address == null || address.equals("") || address.matches("\\s+"))) {
+					return;
+				}
+				String city = textBowCity.getText();	
+				if((city == null || city.equals("") || city.matches("\\s+"))) {
+					return;
+				}
+				String state = (String) comboBowState.getSelectedItem();	
+				if((state == null || state.equals("") || state.matches("\\s+"))) {
+					return;
+				}
+				
+				String query = "SELECT * FROM BORROWER B WHERE"
+						+ " B.Fname = '" + firstName + "'"
+						+ " AND B.Lname = '" + lastName + "'"
+						+ " AND B.Address = '" + address + "'"
+						+ " AND B.City = '" + city + "'"
+						+ " AND B.State = '" + state + "'"
+						+ " ;";
+				
+				ResultSet rs = null;
+				Statement stmt = DBConnector.instance().createStatement();
+				
+				try {
+					System.out.println(query);
+					rs = stmt.executeQuery(query);
+					if(null == rs) {
+						return;
+					}
+					
+					if(rs.first()) {
+						JOptionPane.showMessageDialog(null, "Borrower already exists");
+						return;
+					}
+					
+					String insertSQL = "INSERT INTO BORROWER (Fname, Lname, Address, City, State) values"
+							+ " ('" + firstName + "','" + lastName + "','" + address + "','" + city + "','" + state + "');";
+					stmt = DBConnector.instance().createStatement();
+					stmt.executeUpdate(insertSQL);
+					
+					stmt = DBConnector.instance().createStatement();
+					rs = stmt.executeQuery(query);
+					if(rs.first()) {
+						JOptionPane.showMessageDialog(null, "New Borrower added, Card NO is " + rs.getString(1));
+					}
+					
+				} catch (SQLException e1) {
+					e1.printStackTrace();
+				}	
+			}
+		});
+		btnNewBorrower.setBounds(82, 278, 193, 25);
+		panelBorrower.add(btnNewBorrower);
 	}
 	
 	private boolean fullNameEnabled = true;
@@ -561,6 +819,16 @@ public class LibraryManagement {
 	private JTextField textCheckOutCardNo;
 	private JTextField textCheckOutAvailable;
 	private JTextField textCheckOutCopies;
+	private JTextField textCheckInBookId;
+	private JTextField textCheckInCardNo;
+	private JTextField textCheckInBowFirstName;
+	private JTextField textCheckInBowLastName;
+	private JTable tableCheckIn;
+	private JTextField textBowFirstName;
+	private JTextField textBowLastName;
+	private JTextField textBowAddress;
+	private JTextField textBowCity;
+	private JTextField textBowZIP;
 	private void setFullNameEnabled(boolean enabled) {
 		textSearchFirstName.setEnabled(!enabled);
 		textSearchMI.setEnabled(!enabled);
@@ -577,7 +845,7 @@ public class LibraryManagement {
 			return -1;
 		}
 		
-		String query = "SELECT COUNT(*) FROM BOOK_LOANS WHERE Book_id = " + bookId
+		String query = "SELECT COUNT(*) FROM BOOK_LOANS WHERE Date_in IS NULL AND Book_id = " + bookId
 				+ " AND Branch_id = " + branchId +" ; ";
 		
 		int copies = -1;
@@ -592,7 +860,6 @@ public class LibraryManagement {
 				copies = rs.getInt(1);
 			}
 		} catch (SQLException e1) {
-			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
 		
@@ -604,7 +871,7 @@ public class LibraryManagement {
 			return -1;
 		}
 		
-		String query = "SELECT COUNT(*) FROM BOOK_LOANS WHERE Card_no = " + cardNo + " ; ";
+		String query = "SELECT COUNT(*) FROM BOOK_LOANS WHERE Date_in IS NULL AND Card_no = " + cardNo + " ; ";
 		
 		int loans = -1;
 		Statement stmt = DBConnector.instance().createStatement();
@@ -618,7 +885,6 @@ public class LibraryManagement {
 				loans = rs.getInt(1);
 			}
 		} catch (SQLException e1) {
-			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
 		
@@ -648,7 +914,6 @@ public class LibraryManagement {
 				copies = rs.getInt(1);
 			}
 		} catch (SQLException e1) {
-			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
 		
@@ -674,10 +939,33 @@ public class LibraryManagement {
 				title = rs.getString(1);
 			}
 		} catch (SQLException e1) {
-			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
 		return title;
+	}
+	
+	private String getDueDate(String loanId) {
+		if((loanId == null || loanId.equals("") || loanId.matches("\\s+"))) {
+			return null;
+		}
+		String query = "SELECT Due_date FROM BOOK_LOANS WHERE Loan_id = " + loanId + "; ";
+		Statement stmt = DBConnector.instance().createStatement();
+		
+		ResultSet rs = null;
+		String due = null;
+		
+		try {
+			rs = stmt.executeQuery(query);
+			if(null == rs) {
+				return null;
+			}
+			if(rs.first()) {
+				due = rs.getString(1);
+			}
+		} catch (SQLException e1) {
+			e1.printStackTrace();
+		}
+		return due;
 	}
 	
 	private String getDueDateFromCurrent() {
@@ -696,7 +984,6 @@ public class LibraryManagement {
 				due = rs.getString(1);
 			}
 		} catch (SQLException e1) {
-			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
 		return due;

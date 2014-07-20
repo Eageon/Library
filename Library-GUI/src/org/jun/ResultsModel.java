@@ -99,4 +99,8 @@ public class ResultsModel extends AbstractTableModel {
 		return columnNames[column] == null ? "No Name" : columnNames[column];
 	}
 
+	public void removeRow(int row) {
+		dataRows.removeElementAt(row);
+		fireTableChanged(null);
+    }
 }
