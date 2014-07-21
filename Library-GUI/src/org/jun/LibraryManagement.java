@@ -576,7 +576,6 @@ public class LibraryManagement {
 		panelCheckIn.add(textCheckInCardNo);
 		
 		textCheckInBowFirstName = new JTextField();
-		textCheckInBowFirstName.setEnabled(false);
 		textCheckInBowFirstName.setColumns(10);
 		textCheckInBowFirstName.setBounds(140, 57, 167, 19);
 		panelCheckIn.add(textCheckInBowFirstName);
@@ -590,7 +589,6 @@ public class LibraryManagement {
 		panelCheckIn.add(label_3);
 		
 		textCheckInBowLastName = new JTextField();
-		textCheckInBowLastName.setEnabled(false);
 		textCheckInBowLastName.setColumns(10);
 		textCheckInBowLastName.setBounds(463, 57, 147, 19);
 		panelCheckIn.add(textCheckInBowLastName);
@@ -706,6 +704,132 @@ public class LibraryManagement {
 		
 		JPanel panelFine = new JPanel();
 		tabbedPane.addTab("Fine Payment", null, panelFine, null);
+		panelFine.setLayout(null);
+		
+		JLabel lblLoanId = new JLabel("Loan ID");
+		lblLoanId.setBounds(36, 21, 70, 15);
+		panelFine.add(lblLoanId);
+		
+		textFineLoanId = new JTextField();
+		textFineLoanId.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				String loanId = textFineLoanId.getText();
+				if(!loanId.matches("\\b\\d+\\b")) {
+					return;
+				}
+				
+				if(!isReturned(loanId)) {
+					float fineEst = getEstimatedFine(loanId);
+					textFineFine.setText(String.format("%.2f", fineEst));
+					textFinePaid.setText("NO");
+					return;
+				}
+				
+				textFinePaid.setText("YES");
+				float fine = getFine(loanId);
+				if(fine == 0.0 || fine < 0) {
+					textFineFine.setText("Paid");
+					return;
+				}
+				
+				textFineFine.setText(String.format("%.2f", fine));
+			}
+		});
+		textFineLoanId.setBounds(105, 19, 114, 19);
+		panelFine.add(textFineLoanId);
+		textFineLoanId.setColumns(10);
+		
+		JLabel lblCardNo_2 = new JLabel("Card NO");
+		lblCardNo_2.setBounds(269, 21, 70, 15);
+		panelFine.add(lblCardNo_2);
+		
+		textFineCardNo = new JTextField();
+		textFineCardNo.setBounds(340, 19, 114, 19);
+		panelFine.add(textFineCardNo);
+		textFineCardNo.setColumns(10);
+		
+		JLabel lblFineest = new JLabel("Fine (est.)");
+		lblFineest.setBounds(472, 21, 84, 15);
+		panelFine.add(lblFineest);
+		
+		textFineFine = new JTextField();
+		textFineFine.setEditable(false);
+		textFineFine.setBounds(562, 19, 84, 19);
+		panelFine.add(textFineFine);
+		textFineFine.setColumns(10);
+		
+		JLabel lblPayFine = new JLabel("Pay Fine");
+		lblPayFine.setBounds(36, 53, 70, 15);
+		panelFine.add(lblPayFine);
+		
+		textFinePay = new JTextField();
+		textFinePay.setBounds(105, 51, 114, 19);
+		panelFine.add(textFinePay);
+		textFinePay.setColumns(10);
+		
+		JLabel lblPaidAmount = new JLabel("Returned");
+		lblPaidAmount.setBounds(269, 53, 70, 15);
+		panelFine.add(lblPaidAmount);
+		
+		textFinePaid = new JTextField();
+		textFinePaid.setEditable(false);
+		textFinePaid.setBounds(340, 51, 114, 19);
+		panelFine.add(textFinePaid);
+		textFinePaid.setColumns(10);
+		
+		JLabel lblFineSummary = new JLabel("Fine Summary");
+		lblFineSummary.setFont(new Font("Dialog", Font.BOLD, 15));
+		lblFineSummary.setBounds(36, 92, 128, 15);
+		panelFine.add(lblFineSummary);
+		
+		JScrollPane scrollPane_1 = new JScrollPane();
+		scrollPane_1.setBounds(12, 119, 660, 270);
+		panelFine.add(scrollPane_1);
+		
+		tableFine = new JTable();
+		scrollPane_1.setViewportView(tableFine);
+		
+		JButton btnSubmitPayment = new JButton("Submit Payment");
+		btnSubmitPayment.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				String loanId = textFineLoanId.getText();
+				if(!loanId.matches("\\b\\d+\\b")) {
+					return;
+				}
+				if(!isReturned(loanId)) {
+					JOptionPane.showMessageDialog(null, "Can NOT pay the fine for the book not returned");
+					return;
+				}
+				
+				String pay = textFinePay.getText();
+				if(!pay.matches("[-+]?[0-9]*\\.?[0-9]+")) {
+					System.out.println("Invalid pay");
+				}
+				
+				float paid = getFine(loanId);
+				if(paid < 0) {
+					JOptionPane.showMessageDialog(null, "Already paid for " + loanId);
+					return;
+				}
+				
+				payFine(loanId, Float.valueOf(pay));
+				refreshFineSummary(true);
+				JOptionPane.showMessageDialog(null, "Pay " + pay + " for " + loanId);
+			}
+		});
+		btnSubmitPayment.setBounds(472, 48, 149, 25);
+		panelFine.add(btnSubmitPayment);
+		
+		JButton btnRefresh = new JButton("Refresh");
+		btnRefresh.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				refreshFineSummary(true);
+			}
+		});
+		btnRefresh.setBounds(234, 87, 117, 25);
+		panelFine.add(btnRefresh);
 		
 		JPanel panelBorrower = new JPanel();
 		tabbedPane.addTab("Borrower Management", null, panelBorrower, null);
@@ -789,6 +913,11 @@ public class LibraryManagement {
 				if((state == null || state.equals("") || state.matches("\\s+"))) {
 					return;
 				}
+				String phone = (String) textBowPhone.getText();	
+				if((phone == null || phone.equals("") || phone.matches("\\s+"))) {
+					return;
+				}
+				
 				
 				String query = "SELECT * FROM BORROWER B WHERE"
 						+ " B.Fname = '" + firstName + "'"
@@ -813,8 +942,8 @@ public class LibraryManagement {
 						return;
 					}
 					
-					String insertSQL = "INSERT INTO BORROWER (Fname, Lname, Address, City, State) values"
-							+ " ('" + firstName + "','" + lastName + "','" + address + "','" + city + "','" + state + "');";
+					String insertSQL = "INSERT INTO BORROWER (Fname, Lname, Address, City, State, Phone) values"
+							+ " ('" + firstName + "','" + lastName + "','" + address + "','" + city + "','" + state + "','" + phone +"');";
 					stmt = DBConnector.instance().createStatement();
 					stmt.executeUpdate(insertSQL);
 					
@@ -831,6 +960,15 @@ public class LibraryManagement {
 		});
 		btnNewBorrower.setBounds(82, 278, 193, 25);
 		panelBorrower.add(btnNewBorrower);
+		
+		JLabel lblPhone = new JLabel("Phone");
+		lblPhone.setBounds(354, 104, 70, 15);
+		panelBorrower.add(lblPhone);
+		
+		textBowPhone = new JTextField();
+		textBowPhone.setBounds(483, 102, 114, 19);
+		panelBorrower.add(textBowPhone);
+		textBowPhone.setColumns(10);
 	}
 	
 	private boolean fullNameEnabled = true;
@@ -851,6 +989,13 @@ public class LibraryManagement {
 	private JTextField textBowAddress;
 	private JTextField textBowCity;
 	private JTextField textBowZIP;
+	private JTextField textFineLoanId;
+	private JTextField textFineCardNo;
+	private JTextField textFineFine;
+	private JTextField textFinePay;
+	private JTextField textFinePaid;
+	private JTable tableFine;
+	private JTextField textBowPhone;
 	private void setFullNameEnabled(boolean enabled) {
 		textSearchFirstName.setEnabled(!enabled);
 		textSearchMI.setEnabled(!enabled);
@@ -1017,7 +1162,8 @@ public class LibraryManagement {
 	
 	private void notifyFine(String loanId) {
 		JOptionPane.showMessageDialog(null, "Borrower have to pay a FINE");
-		
+		textFineLoanId.setText(loanId);
+		tabbedPane.setSelectedIndex(3);
 	}
 	
 	/** 
@@ -1091,15 +1237,31 @@ public class LibraryManagement {
 		query += " WHERE Loan_id = " + loanId + "; ";
 		
 		try {
-			stmt.executeUpdate(query);
+			int count = stmt.executeUpdate(query);
+			if(count == 0) {
+				insertFine(loanId, fine);
+			}
 			
 		} catch (SQLException e1) {
 			e1.printStackTrace();
 		}
 	}
 	
+	private void insertFine(String loanId, float fine) {
+		String query = "INSERT INTO FINE (Loan_id, Fine_amt) values ( '";
+		Statement stmt = DBConnector.instance().createStatement();
+		
+		query += loanId + "', '" + fine + "' ) ;";
+		
+		try {
+			int count = stmt.executeUpdate(query);
+		} catch (SQLException e1) {
+			e1.printStackTrace();
+		}
+	}
+	
 	private void payFine(String loanId, float amount) {
-			String query = "UPDATE FINE SET Fine_amt = ";
+			String query = "UPDATE FINE SET Paid = TRUE, Fine_amt = ";
 			Statement stmt = DBConnector.instance().createStatement();
 			
 			float fine = amount;
@@ -1133,5 +1295,57 @@ public class LibraryManagement {
 			e1.printStackTrace();
 		}
 		return due;
+	}
+	
+	private boolean isReturned(String loanId) {
+		String query = "SELECT * FROM BOOK_LOANS "
+					+ " WHERE Date_in IS NULL AND Loan_id = '";
+		query += loanId + "' ;";
+		Statement stmt = DBConnector.instance().createStatement();
+		
+		ResultSet rs = null;
+		boolean returned = true;
+		
+		try {
+			rs = stmt.executeQuery(query);
+			if(null == rs) {
+				return false;
+			}
+			if(rs.first()) {
+				return false;
+			} else {
+				return true;
+			}
+		} catch (SQLException e1) {
+			e1.printStackTrace();
+		}
+		return true;
+	}
+	
+	private void refreshFineSummary(boolean filter) {
+		String query = "SELECT Card_no, SUM(Fine_amt) AS 'Total Fine' FROM BOOK_LOANS L, FINE F "
+				+ " WHERE F.Loan_id = L.Loan_id ";
+		if(filter) {
+			query += " AND Paid = FALSE ";
+		}
+		query += " GROUP BY Card_no ;";
+		Statement stmt = DBConnector.instance().createStatement();
+	
+		ResultSet rs = null;
+		
+		try {
+			rs = stmt.executeQuery(query);
+			if(null == rs) {
+				return;
+			}
+			
+			ResultsModel model = new ResultsModel();
+			model.setResultSet(rs);
+			tableFine.setModel(model);
+			
+		} catch (SQLException e1) {
+			e1.printStackTrace();
+		}
+	
 	}
 }
