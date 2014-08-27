@@ -38,7 +38,6 @@ import javax.swing.event.DocumentListener;
 
 import java.awt.Color;
 
-import javax.swing.JTextPane;
 import javax.swing.JComboBox;
 import javax.swing.DefaultComboBoxModel;
 
@@ -53,7 +52,7 @@ public class LibraryManagement {
 	private JTextField textSearchFirstName;
 	private JTextField textSearchMI;
 	private JTextField textSearchLastName;
-	private JComboBox comboBowState;
+	private JComboBox<String> comboBowState;
 
 	/**
 	 * Launch the application.
@@ -81,7 +80,6 @@ public class LibraryManagement {
 	/**
 	 * Initialize the contents of the frame.
 	 */
-	@SuppressWarnings("unchecked")
 	private void initialize() {
 		frmLibraryManagement = new JFrame();
 		frmLibraryManagement.setTitle("Library Management");
@@ -875,8 +873,8 @@ public class LibraryManagement {
 		lblNewLabel_4.setBounds(82, 189, 70, 15);
 		panelBorrower.add(lblNewLabel_4);
 		
-		comboBowState = new JComboBox();
-		comboBowState.setModel(new DefaultComboBoxModel(new String[] {"AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA", "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD", "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ", "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC", "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY"}));
+		comboBowState = new JComboBox<String>();
+		comboBowState.setModel(new DefaultComboBoxModel<String>(new String[] {"AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA", "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD", "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ", "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC", "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY"}));
 		comboBowState.setBounds(180, 184, 51, 24);
 		panelBorrower.add(comboBowState);
 		
@@ -1136,6 +1134,7 @@ public class LibraryManagement {
 		return title;
 	}
 	
+	@SuppressWarnings("unused")
 	private String getDueDate(String loanId) {
 		if((loanId == null || loanId.equals("") || loanId.matches("\\s+"))) {
 			return null;
@@ -1254,6 +1253,7 @@ public class LibraryManagement {
 		query += loanId + "', '" + fine + "' ) ;";
 		
 		try {
+			@SuppressWarnings("unused")
 			int count = stmt.executeUpdate(query);
 		} catch (SQLException e1) {
 			e1.printStackTrace();
@@ -1304,6 +1304,7 @@ public class LibraryManagement {
 		Statement stmt = DBConnector.instance().createStatement();
 		
 		ResultSet rs = null;
+		@SuppressWarnings("unused")
 		boolean returned = true;
 		
 		try {
