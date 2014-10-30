@@ -228,7 +228,7 @@ public class LibraryManagement {
                         return;
                     }
                     // while(!firstName.matches("^[^\\d\\s]+$"));
-                    ResultSet rs = null;
+                    ResultSet rs;
 
                     try {
                         System.out.println(query);
@@ -278,7 +278,7 @@ public class LibraryManagement {
                         return;
                     }
                     // while(!firstName.matches("^[^\\d\\s]+$"));
-                    ResultSet rs = null;
+                    ResultSet rs;
 
                     try {
                         System.out.println(query);
@@ -629,7 +629,7 @@ public class LibraryManagement {
                     return;
                 }
                 // while(!firstName.matches("^[^\\d\\s]+$"));
-                ResultSet rs = null;
+                ResultSet rs;
                 Statement stmt = DBConnector.instance().createStatement();
 
                 try {
@@ -872,8 +872,8 @@ public class LibraryManagement {
         lblNewLabel_4.setBounds(82, 189, 70, 15);
         panelBorrower.add(lblNewLabel_4);
 
-        comboBowState = new JComboBox<String>();
-        comboBowState.setModel(new DefaultComboBoxModel<String>(new String[]{"AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA", "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD", "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ", "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC", "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY"}));
+        comboBowState = new JComboBox<>();
+        comboBowState.setModel(new DefaultComboBoxModel<>(new String[]{"AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA", "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD", "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ", "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC", "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY"}));
         comboBowState.setBounds(180, 184, 51, 24);
         panelBorrower.add(comboBowState);
 
@@ -910,7 +910,7 @@ public class LibraryManagement {
                 if ((state == null || state.equals("") || state.matches("\\s+"))) {
                     return;
                 }
-                String phone = (String) textBowPhone.getText();
+                String phone = textBowPhone.getText();
                 if ((phone == null || phone.equals("") || phone.matches("\\s+"))) {
                     return;
                 }
@@ -924,7 +924,7 @@ public class LibraryManagement {
                         + " AND B.State = '" + state + "'"
                         + " ;";
 
-                ResultSet rs = null;
+                ResultSet rs;
                 Statement stmt = DBConnector.instance().createStatement();
 
                 try {
@@ -1015,7 +1015,7 @@ public class LibraryManagement {
 
         int copies = -1;
         Statement stmt = DBConnector.instance().createStatement();
-        ResultSet rs = null;
+        ResultSet rs;
         try {
             rs = stmt.executeQuery(query);
             if (null == rs) {
@@ -1040,7 +1040,7 @@ public class LibraryManagement {
 
         boolean exist = false;
         Statement stmt = DBConnector.instance().createStatement();
-        ResultSet rs = null;
+        ResultSet rs;
         try {
             rs = stmt.executeQuery(query);
             if (null == rs) {
@@ -1065,7 +1065,7 @@ public class LibraryManagement {
 
         int loans = -1;
         Statement stmt = DBConnector.instance().createStatement();
-        ResultSet rs = null;
+        ResultSet rs;
         try {
             rs = stmt.executeQuery(query);
             if (null == rs) {
@@ -1094,7 +1094,7 @@ public class LibraryManagement {
 
         int copies = -1;
         Statement stmt = DBConnector.instance().createStatement();
-        ResultSet rs = null;
+        ResultSet rs;
         try {
             rs = stmt.executeQuery(query);
             if (null == rs) {
@@ -1117,7 +1117,7 @@ public class LibraryManagement {
         String query = "SELECT Title FROM BOOK WHERE Book_id = " + bookId + "; ";
         Statement stmt = DBConnector.instance().createStatement();
 
-        ResultSet rs = null;
+        ResultSet rs;
         String title = null;
 
         try {
@@ -1142,7 +1142,7 @@ public class LibraryManagement {
         String query = "SELECT Due_date FROM BOOK_LOANS WHERE Loan_id = " + loanId + "; ";
         Statement stmt = DBConnector.instance().createStatement();
 
-        ResultSet rs = null;
+        ResultSet rs;
         String due = null;
 
         try {
@@ -1166,7 +1166,7 @@ public class LibraryManagement {
     }
 
     /**
-     * @param loanId
+     * @param loanId unique key
      * @return 0.0 if no fine, or -1 if paid
      */
     private float getFine(String loanId) {
@@ -1175,7 +1175,7 @@ public class LibraryManagement {
         float fine = (float) 0.0;
 
         query += " WHERE Loan_id = " + loanId + "; ";
-        ResultSet rs = null;
+        ResultSet rs;
 
         try {
             rs = stmt.executeQuery(query);
@@ -1204,7 +1204,7 @@ public class LibraryManagement {
         Statement stmt = DBConnector.instance().createStatement();
 
         query += " WHERE Loan_id = " + loanId + "; ";
-        ResultSet rs = null;
+        ResultSet rs;
         float fine = 0;
 
         try {
@@ -1261,11 +1261,14 @@ public class LibraryManagement {
     }
 
     private void payFine(String loanId, float amount) {
+        if (amount < 0) {
+            return;
+        }
+
         String query = "UPDATE FINE SET Paid = TRUE, Fine_amt = ";
         Statement stmt = DBConnector.instance().createStatement();
 
-        float fine = amount;
-        query += fine;
+        query += amount;
         query += " WHERE Loan_id = " + loanId + "; ";
 
         try {
@@ -1280,7 +1283,7 @@ public class LibraryManagement {
         String query = "SELECT DATE_ADD(CURDATE(), INTERVAL 14 DAY);";
         Statement stmt = DBConnector.instance().createStatement();
 
-        ResultSet rs = null;
+        ResultSet rs;
         String due = null;
 
         try {
@@ -1299,24 +1302,17 @@ public class LibraryManagement {
 
     private boolean isReturned(String loanId) {
         String query = "SELECT * FROM BOOK_LOANS "
-                + " WHERE Date_in IS NULL AND Loan_id = '";
-        query += loanId + "' ;";
+                + " WHERE Date_in IS NULL AND Loan_id = '" + loanId + "' ;";
+
         Statement stmt = DBConnector.instance().createStatement();
 
-        ResultSet rs = null;
+        ResultSet rs;
         @SuppressWarnings("unused")
         boolean returned = true;
 
         try {
             rs = stmt.executeQuery(query);
-            if (null == rs) {
-                return false;
-            }
-            if (rs.first()) {
-                return false;
-            } else {
-                return true;
-            }
+            return null != rs && !rs.first();
         } catch (SQLException e1) {
             e1.printStackTrace();
         }
@@ -1332,7 +1328,7 @@ public class LibraryManagement {
         query += " GROUP BY Card_no ;";
         Statement stmt = DBConnector.instance().createStatement();
 
-        ResultSet rs = null;
+        ResultSet rs;
 
         try {
             rs = stmt.executeQuery(query);

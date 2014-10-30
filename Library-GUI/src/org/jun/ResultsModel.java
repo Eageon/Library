@@ -41,7 +41,7 @@ public class ResultsModel extends AbstractTableModel {
             for (int i = 0; i < columns; i++) {
                 columnNames[i] = metadata.getColumnLabel(i + 1);
             }
-        } catch (SQLException e) {            // TODO Auto-generated catch block
+        } catch (SQLException e) {
             e.printStackTrace();
         }
         return columnNames.length;
