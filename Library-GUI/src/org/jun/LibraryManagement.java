@@ -495,6 +495,13 @@ public class LibraryManagement {
                     return;
                 }
 
+                boolean hasFine = checkFine(cardNo);
+                if (hasFine == true) {
+                    JOptionPane.showMessageDialog(null, "You have pay your fine before you check out more books");
+                    return;
+                }
+
+
                 String query = "INSERT INTO BOOK_LOANS (Book_id, Branch_id, Card_no, Date_out, Due_date) "
                         + " values ( '" + bookId + "','" + branchId + "', '" + cardNo + "', "
                         + " CURDATE(), DATE_ADD(CURDATE(), INTERVAL 14 DAY)" + "); ";
@@ -1344,5 +1351,38 @@ public class LibraryManagement {
             e1.printStackTrace();
         }
 
+    }
+
+    private boolean checkFine(String cardNo) {
+
+        String query = "SELECT COUNT(*) " +
+                "FROM FINE F " +
+                "WHERE F.Paid = false AND F.Loan_id IN " +
+                "   (SELECT Loan_id FROM BOOK_LOANS L WHERE L.Card_no = " + cardNo + " )";
+
+        Statement stmt = DBConnector.instance().createStatement();
+        ResultSet rs;
+
+        try {
+            rs = stmt.executeQuery(query);
+            if (null == rs) {
+                return false;
+            }
+
+            if (rs.first()) {
+                int count = rs.getInt(1);
+                if (count > 0) {
+                    System.out.println(count + "");
+                    return true;
+                } else {
+                    return false;
+                }
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return false;
     }
 }
